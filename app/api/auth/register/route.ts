@@ -4,7 +4,9 @@ import { z } from 'zod'
 
 const registerSchema = z.object({
   email: z.string().email('Correo inválido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
+  password: z.string()
+  .min(8, 'La contraseña debe tener mínimo 8 caracteres')
+  .regex(/^\S+$/, 'La contraseña no puede contener espacios'),
   first_name: z.string().min(1, 'Nombre requerido'),
   last_name: z.string().min(1, 'Apellido requerido')
 })
