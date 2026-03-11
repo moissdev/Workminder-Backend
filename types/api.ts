@@ -46,5 +46,5 @@ export interface CreateSubtaskRequest {
 }
 
 export interface CreateReminderRequest {
-  reminder_datetime: string  // ISO 8601: "2026-03-15T10:00:00"
+  reminder_date: string  // ISO 8601: "2026-03-15T10:00:00"
 }

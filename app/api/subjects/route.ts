@@ -13,13 +13,9 @@ export async function GET(request: NextRequest) {
     const userId = await verifyAuth(request)
     const subjects = await SubjectsService.getAll(userId)
     return NextResponse.json({ success: true, data: subjects })
-
   } catch (error: any) {
-    const isAuthError = error.message.includes('Token')
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: isAuthError ? 401 : 500 }
-    )
+    const status = error.message.includes('Token') ? 401 : 500
+    return NextResponse.json({ success: false, error: error.message }, { status })
   }
 }
 
@@ -30,20 +26,13 @@ export async function POST(request: NextRequest) {
     const validation = createSubjectSchema.safeParse(body)
 
     if (!validation.success) {
-      return NextResponse.json(
-        { success: false, error: validation.error.issues[0]?.message },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: validation.error.issues[0]?.message }, { status: 400 })
     }
 
     const subject = await SubjectsService.create(userId, validation.data)
     return NextResponse.json({ success: true, data: subject }, { status: 201 })
-
   } catch (error: any) {
-    const isAuthError = error.message.includes('Token')
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: isAuthError ? 401 : 500 }
-    )
+    const status = error.message.includes('Token') ? 401 : 500
+    return NextResponse.json({ success: false, error: error.message }, { status })
   }
 }

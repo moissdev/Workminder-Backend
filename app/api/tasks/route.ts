@@ -9,7 +9,9 @@ const createTaskSchema = z.object({
   due_date: z.string().min(1, 'La fecha de entrega es requerida'),
   importance: z.preprocess((val) => (val === '' ? undefined : Number(val)), z.number().int().min(1).max(5).optional()),
   complexity: z.preprocess((val) => (val === '' ? undefined : Number(val)), z.number().int().min(1).max(5).optional()),
-  subject_id: z.preprocess((val) => (val === '' ? undefined : val), z.string().uuid().optional().nullable())
+  subject_id: z.preprocess((val) => (val === '' ? undefined : val), z.string().uuid().optional().nullable()),
+  subtasks: z.array(z.object({ subtask_name: z.string() })).optional(),
+  reminders: z.array(z.object({ reminder_date: z.string() })).optional()
 })
 
 export async function GET(request: NextRequest) {
@@ -18,20 +20,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const prioritized = searchParams.get('prioritized') === 'true'
 
-    console.log(`[GET /api/tasks] User: ${userId}, Prioritized: ${prioritized}`)
-
     const tasks = prioritized
       ? await TasksService.getPrioritized(userId)
       : await TasksService.getAll(userId)
 
     return NextResponse.json({ success: true, data: tasks })
-
   } catch (error: any) {
-    const isAuthError = error.message.includes('Token')
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: isAuthError ? 401 : 500 }
-    )
+    const status = error.message.includes('Token') ? 401 : 500
+    return NextResponse.json({ success: false, error: error.message }, { status })
   }
 }
 
@@ -39,10 +35,8 @@ export async function POST(request: NextRequest) {
   try {
     const userId = await verifyAuth(request)
     const body = await request.json()
-    console.log(`[POST /api/tasks] User: ${userId}, Body:`, body)
 
     const validation = createTaskSchema.safeParse(body)
-
     if (!validation.success) {
       return NextResponse.json(
         { success: false, error: validation.error.issues[0]?.message },
@@ -52,12 +46,8 @@ export async function POST(request: NextRequest) {
 
     const task = await TasksService.create(userId, validation.data)
     return NextResponse.json({ success: true, data: task }, { status: 201 })
-
   } catch (error: any) {
-    const isAuthError = error.message.includes('Token')
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: isAuthError ? 401 : 500 }
-    )
+    const status = error.message.includes('Token') ? 401 : 500
+    return NextResponse.json({ success: false, error: error.message }, { status })
   }
 }

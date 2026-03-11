@@ -17,19 +17,12 @@ export async function POST(request: NextRequest) {
     const validation = registerSchema.safeParse(body)
 
     if (!validation.success) {
-      return NextResponse.json(
-        { success: false, error: validation.error.issues[0]?.message },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: validation.error.issues[0]?.message }, { status: 400 })
     }
 
     const result = await AuthService.register(validation.data)
     return NextResponse.json({ success: true, data: result }, { status: 201 })
-
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

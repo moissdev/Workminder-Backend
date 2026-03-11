@@ -1,8 +1,6 @@
 import { supabase } from '@/lib/supabase/client'
 
 export class AuthService {
-
-  // Registro de nuevo usuario
   static async register(data: {
     email: string
     password: string
@@ -32,7 +30,6 @@ export class AuthService {
     }
   }
 
-  // Login
   static async login(email: string, password: string) {
     const { data: authData, error } = await supabase.auth.signInWithPassword({
       email,
@@ -41,7 +38,6 @@ export class AuthService {
 
     if (error) throw new Error('Credenciales incorrectas')
 
-    // Obtener el perfil del usuario
     const { data: profile } = await supabase
       .from('profiles')
       .select('first_name, last_name')
@@ -59,7 +55,6 @@ export class AuthService {
     }
   }
 
-  // Obtener datos del usuario autenticado
   static async getMe(userId: string) {
     const { data: profile, error } = await supabase
       .from('profiles')

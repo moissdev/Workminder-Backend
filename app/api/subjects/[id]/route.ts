@@ -16,22 +16,11 @@ export async function GET(
     const userId = await verifyAuth(request)
     const { id } = await params
     const subject = await SubjectsService.getById(id, userId)
-
-    if (!subject) {
-      return NextResponse.json(
-        { success: false, error: 'Materia no encontrada' },
-        { status: 404 }
-      )
-    }
-
+    if (!subject) return NextResponse.json({ success: false, error: 'Materia no encontrada' }, { status: 404 })
     return NextResponse.json({ success: true, data: subject })
-
   } catch (error: any) {
-    const isAuthError = error.message.includes('Token')
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: isAuthError ? 401 : 500 }
-    )
+    const status = error.message.includes('Token') ? 401 : 500
+    return NextResponse.json({ success: false, error: error.message }, { status })
   }
 }
 
@@ -46,21 +35,14 @@ export async function PUT(
     const validation = updateSubjectSchema.safeParse(body)
 
     if (!validation.success) {
-      return NextResponse.json(
-        { success: false, error: validation.error.issues[0]?.message },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: validation.error.issues[0]?.message }, { status: 400 })
     }
 
     const subject = await SubjectsService.update(id, userId, validation.data)
     return NextResponse.json({ success: true, data: subject })
-
   } catch (error: any) {
-    const isAuthError = error.message.includes('Token')
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: isAuthError ? 401 : 500 }
-    )
+    const status = error.message.includes('Token') ? 401 : 500
+    return NextResponse.json({ success: false, error: error.message }, { status })
   }
 }
 
@@ -73,12 +55,8 @@ export async function DELETE(
     const { id } = await params
     await SubjectsService.delete(id, userId)
     return NextResponse.json({ success: true, message: 'Materia eliminada' })
-
   } catch (error: any) {
-    const isAuthError = error.message.includes('Token')
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: isAuthError ? 401 : 500 }
-    )
+    const status = error.message.includes('Token') ? 401 : 500
+    return NextResponse.json({ success: false, error: error.message }, { status })
   }
 }

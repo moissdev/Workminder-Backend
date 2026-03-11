@@ -1,8 +1,6 @@
 import { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase/client'
 
-// Verifica el token de Supabase y devuelve el userId
-// Si el token es inválido o no existe, lanza un error (el route devuelve 401)
 export async function verifyAuth(request: NextRequest): Promise<string> {
   const header = request.headers.get('Authorization')
 
@@ -11,14 +9,11 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
   }
 
   const token = header.split(' ')[1]
-
-  // Supabase verifica el token y devuelve el usuario
   const { data: { user }, error } = await supabase.auth.getUser(token)
 
   if (error || !user) {
     throw new Error('Token inválido o expirado')
   }
 
-  console.log(`[verifyAuth] Token verificado. UserID: ${user.id}`)
-  return user.id // UUID del usuario autenticado
+  return user.id
 }

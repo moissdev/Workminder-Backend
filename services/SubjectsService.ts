@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase/client'
 
 export class SubjectsService {
-
   static async getAll(userId: string) {
     const { data, error } = await supabase
       .from('subjects')
@@ -25,10 +24,7 @@ export class SubjectsService {
     return data
   }
 
-  static async create(userId: string, data: {
-    subject_name: string
-    color?: string
-  }) {
+  static async create(userId: string, data: { subject_name: string, color?: string }) {
     const { data: subject, error } = await supabase
       .from('subjects')
       .insert({
@@ -43,10 +39,7 @@ export class SubjectsService {
     return subject
   }
 
-  static async update(id: string, userId: string, data: {
-    subject_name?: string
-    color?: string
-  }) {
+  static async update(id: string, userId: string, data: { subject_name?: string, color?: string }) {
     const { data: subject, error } = await supabase
       .from('subjects')
       .update(data)
@@ -60,23 +53,21 @@ export class SubjectsService {
   }
 
   static async delete(id: string, userId: string) {
-  // Primero desasociar todas las tareas de esta materia → "Sin materia"
-  const { error: updateError } = await supabase
-    .from('tasks')
-    .update({ subject_id: null })
-    .eq('subject_id', id)
-    .eq('user_id', userId)
+    const { error: updateError } = await supabase
+      .from('tasks')
+      .update({ subject_id: null })
+      .eq('subject_id', id)
+      .eq('user_id', userId)
 
-  if (updateError) throw new Error(updateError.message)
+    if (updateError) throw new Error(updateError.message)
 
-  // Luego eliminar la materia
-  const { error } = await supabase
-    .from('subjects')
-    .delete()
-    .eq('id', id)
-    .eq('user_id', userId)
+    const { error } = await supabase
+      .from('subjects')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
 
-  if (error) throw new Error(error.message)
-  return true
-}
+    if (error) throw new Error(error.message)
+    return true
+  }
 }

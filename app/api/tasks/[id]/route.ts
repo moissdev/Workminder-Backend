@@ -26,13 +26,9 @@ export async function GET(
     const { id } = await params
     const task = await TasksService.getById(id, userId)
     return NextResponse.json({ success: true, data: task })
-
   } catch (error: any) {
-    const isAuthError = error.message.includes('Token')
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: isAuthError ? 401 : 500 }
-    )
+    const status = error.message.includes('Token') ? 401 : 500
+    return NextResponse.json({ success: false, error: error.message }, { status })
   }
 }
 
@@ -44,26 +40,17 @@ export async function PUT(
     const userId = await verifyAuth(request)
     const { id } = await params
     const body = await request.json()
-    console.log(`[PUT /api/tasks/${id}] User: ${userId}, Body:`, body)
 
     const validation = updateTaskSchema.safeParse(body)
-
     if (!validation.success) {
-      return NextResponse.json(
-        { success: false, error: validation.error.issues[0]?.message },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: validation.error.issues[0]?.message }, { status: 400 })
     }
 
     const task = await TasksService.update(id, userId, validation.data)
     return NextResponse.json({ success: true, data: task })
-
   } catch (error: any) {
-    const isAuthError = error.message.includes('Token')
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: isAuthError ? 401 : 500 }
-    )
+    const status = error.message.includes('Token') ? 401 : 500
+    return NextResponse.json({ success: false, error: error.message }, { status })
   }
 }
 
@@ -76,12 +63,8 @@ export async function DELETE(
     const { id } = await params
     await TasksService.delete(id, userId)
     return NextResponse.json({ success: true, message: 'Tarea eliminada' })
-
   } catch (error: any) {
-    const isAuthError = error.message.includes('Token')
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: isAuthError ? 401 : 500 }
-    )
+    const status = error.message.includes('Token') ? 401 : 500
+    return NextResponse.json({ success: false, error: error.message }, { status })
   }
 }

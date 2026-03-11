@@ -2,7 +2,6 @@ import { supabase } from '@/lib/supabase/client'
 import { calcularUrgencia } from '@/utils/urgency'
 
 export class TasksService {
-
   static async getAll(userId: string) {
     const { data, error } = await supabase
       .from('tasks')
@@ -25,15 +24,11 @@ export class TasksService {
     if (error) throw new Error(error.message)
 
     return data
-      .map(task => {
-        const urgency = calcularUrgencia(
-          task.importance ?? 3,
-          task.complexity ?? 3,
-          task.due_date
-        )
-        return { ...task, urgency }
-      })
-      .sort((a, b) => b.urgency - a.urgency)
+      .map(task => ({
+        ...task,
+        urgency: calcularUrgencia(task.importance ?? 3, task.complexity ?? 3, task.due_date)
+      }))
+      .sort((a, b) => (b.urgency || 0) - (a.urgency || 0))
   }
 
   static async getById(id: string, userId: string) {
@@ -42,7 +37,8 @@ export class TasksService {
       .select(`
         *,
         subjects (id, subject_name, color),
-        subtasks (subtask_id, subtask_name, is_completed)
+        subtasks (subtask_id, subtask_name, is_completed),
+        reminders (reminder_id, reminder_date)
       `)
       .eq('id', id)
       .eq('user_id', userId)
@@ -59,6 +55,8 @@ export class TasksService {
     importance?: number
     complexity?: number
     subject_id?: string | null
+    subtasks?: { subtask_name: string }[]
+    reminders?: { reminder_date: string }[]
   }) {
     const importance = data.importance ?? 3
     const complexity = data.complexity ?? 3
@@ -75,32 +73,40 @@ export class TasksService {
         complexity,
         urgency,
         subject_id: data.subject_id ?? null,
-        task_status: 'Pendiente',
-        completed_at: null
+        task_status: 'Pendiente'
       })
       .select()
       .single()
 
     if (error) throw new Error(error.message)
-    return task
+
+    if (data.subtasks && data.subtasks.length > 0) {
+      const subtasksToInsert = data.subtasks.map(s => ({
+        task_id: task.id,
+        subtask_name: s.subtask_name,
+        is_completed: false
+      }))
+      await supabase.from('subtasks').insert(subtasksToInsert)
+    }
+
+    if (data.reminders && data.reminders.length > 0) {
+      const remindersToInsert = data.reminders.map(r => ({
+        task_id: task.id,
+        reminder_date: r.reminder_date
+      }))
+      await supabase.from('reminders').insert(remindersToInsert)
+    }
+
+    return this.getById(task.id, userId)
   }
 
-  static async update(id: string, userId: string, data: {
-    task_title?: string
-    extra_note?: string | null
-    due_date?: string
-    importance?: number | null
-    complexity?: number | null
-    subject_id?: string | null
-    task_status?: string
-  }) {
-    // Recalcular urgencia si cambian campos que la afectan
-    let updateData: any = { ...data }
+  static async update(id: string, userId: string, data: any) {
+    let updateData = { ...data }
 
     if (data.due_date || data.importance || data.complexity) {
       const { data: existing } = await supabase
         .from('tasks')
-        .select('importance, complexity, due_date, task_status')
+        .select('importance, complexity, due_date')
         .eq('id', id)
         .eq('user_id', userId)
         .single()
@@ -113,7 +119,6 @@ export class TasksService {
       }
     }
 
-    // Manejar completed_at según el estatus
     if (data.task_status === 'Completada') {
       updateData.completed_at = new Date().toISOString()
     } else if (data.task_status === 'Pendiente' || data.task_status === 'Atrasada') {
@@ -132,53 +137,6 @@ export class TasksService {
     return task
   }
 
-  static async complete(id: string, userId: string) {
-    const { data, error } = await supabase
-      .from('tasks')
-      .update({
-        task_status: 'Completada',
-        completed_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select()
-      .single()
-
-    if (error) throw new Error(error.message)
-    return data
-  }
-
-  static async reopen(id: string, userId: string) {
-    const { data, error } = await supabase
-      .from('tasks')
-      .update({
-        task_status: 'Pendiente',
-        completed_at: null
-      })
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select()
-      .single()
-
-    if (error) throw new Error(error.message)
-    return data
-  }
-
-  static async deleteExpiredCompleted(userId: string) {
-    const hace7Dias = new Date()
-    hace7Dias.setDate(hace7Dias.getDate() - 7)
-
-    const { error } = await supabase
-      .from('tasks')
-      .delete()
-      .eq('user_id', userId)
-      .eq('task_status', 'Completada')
-      .lt('completed_at', hace7Dias.toISOString())
-
-    if (error) throw new Error(error.message)
-    return true
-  }
-
   static async delete(id: string, userId: string) {
     const { error } = await supabase
       .from('tasks')
@@ -189,4 +147,4 @@ export class TasksService {
     if (error) throw new Error(error.message)
     return true
   }
-}
+}
