@@ -137,6 +137,10 @@ export class TasksService {
     return task
   }
 
+  static async complete(id: string, userId: string) {
+    return this.update(id, userId, { task_status: 'Completada' })
+  }
+
   static async delete(id: string, userId: string) {
     const { error } = await supabase
       .from('tasks')
