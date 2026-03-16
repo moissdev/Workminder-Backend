@@ -21,7 +21,18 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await AuthService.register(validation.data)
-    return NextResponse.json({ success: true, data: result }, { status: 201 })
+    return NextResponse.json({
+      success: true,
+      data: {
+        access_token: result.access_token,
+        user: {
+          id: result.id,
+          email: result.email,
+          first_name: result.first_name,
+          last_name: result.last_name
+        }
+      }
+    }, { status: 201 })
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }

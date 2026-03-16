@@ -21,12 +21,26 @@ export class AuthService {
     if (error) throw new Error(error.message)
     if (!authData.user) throw new Error('No se pudo crear el usuario')
 
+    // Inserción manual para asegurar que los datos de perfil existan inmediatamente
+    // Esto previene que el frontend reciba datos vacíos si el trigger es lento
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: authData.user.id,
+        first_name: data.first_name,
+        last_name: data.last_name
+      })
+
+    if (profileError) {
+      console.error('Error al crear perfil manualmente:', profileError.message)
+    }
+
     return {
       id: authData.user.id,
       email: authData.user.email,
       first_name: data.first_name,
       last_name: data.last_name,
-      access_token: authData.session?.access_token
+      access_token: authData.session?.access_token || null
     }
   }
 
