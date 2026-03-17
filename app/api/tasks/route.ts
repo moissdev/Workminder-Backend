@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: tasks })
   } catch (error: any) {
+    console.error('[GET /api/tasks] Error:', error.message)
     const status = error.message.includes('Token') ? 401 : 500
     return NextResponse.json({ success: false, error: error.message }, { status })
   }
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
 
     const validation = createTaskSchema.safeParse(body)
     if (!validation.success) {
+      console.error('[POST /api/tasks] Validation Error:', validation.error.issues)
       return NextResponse.json(
         { success: false, error: validation.error.issues[0]?.message },
         { status: 400 }
@@ -47,6 +49,7 @@ export async function POST(request: NextRequest) {
     const task = await TasksService.create(userId, validation.data)
     return NextResponse.json({ success: true, data: task }, { status: 201 })
   } catch (error: any) {
+    console.error('[POST /api/tasks] Error:', error.message)
     const status = error.message.includes('Token') ? 401 : 500
     return NextResponse.json({ success: false, error: error.message }, { status })
   }

@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const subjects = await SubjectsService.getAll(userId)
     return NextResponse.json({ success: true, data: subjects })
   } catch (error: any) {
+    console.error('[GET /api/subjects] Error:', error.message)
     const status = error.message.includes('Token') ? 401 : 500
     return NextResponse.json({ success: false, error: error.message }, { status })
   }
@@ -26,12 +27,14 @@ export async function POST(request: NextRequest) {
     const validation = createSubjectSchema.safeParse(body)
 
     if (!validation.success) {
+      console.error('[POST /api/subjects] Validation Error:', validation.error.issues)
       return NextResponse.json({ success: false, error: validation.error.issues[0]?.message }, { status: 400 })
     }
 
     const subject = await SubjectsService.create(userId, validation.data)
     return NextResponse.json({ success: true, data: subject }, { status: 201 })
   } catch (error: any) {
+    console.error('[POST /api/subjects] Error:', error.message)
     const status = error.message.includes('Token') ? 401 : 500
     return NextResponse.json({ success: false, error: error.message }, { status })
   }

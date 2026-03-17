@@ -12,7 +12,8 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
   const { data: { user }, error } = await supabase.auth.getUser(token)
 
   if (error || !user) {
-    throw new Error('Token inválido o expirado')
+    console.error('[verifyAuth] Error Supabase:', error?.message || 'No user')
+    throw new Error(`Token inválido o expirado: ${error?.message || 'No user'}`)
   }
 
   return user.id
