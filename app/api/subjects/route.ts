@@ -39,9 +39,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: error.message }, { status })
   }
 }
-
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 204,
-  })
-}
